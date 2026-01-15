@@ -1,11 +1,11 @@
 --[[ 
-🔥 Sasha SCP Hub
+🧬 Sasha SCP Hub
 👑 Author: Sasha Panov
 ⚙ Executor: Delta
-🧠 MM2 / Universal
+🎮 Game: MM2 / Universal
 ]]
 
----------------- UI LOAD ----------------
+-- UI
 local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
 
 local Window = OrionLib:MakeWindow({
@@ -15,41 +15,43 @@ local Window = OrionLib:MakeWindow({
 	ConfigFolder = "SashaSCP"
 })
 
+-- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
-local UIS = game:GetService("UserInputService")
 
-------------------------------------------------
--- 🧠 SMART AUTO FARM
-------------------------------------------------
+--------------------------------------------------
+-- 🧠 SMART AUTOFARM
+--------------------------------------------------
 local AutoFarm = false
 
 local FarmTab = Window:MakeTab({
-	Name = "🧠 Smart Farm",
+	Name = "🧠 AutoFarm",
 	Icon = "rbxassetid://4483345998"
 })
 
 local function GetNearestCoin()
-	local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if not hrp then return nil end
+	local char = LocalPlayer.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+	local hrp = char.HumanoidRootPart
 
-	local dist, target = math.huge, nil
+	local dist, coin = math.huge, nil
 	for _,v in pairs(workspace:GetDescendants()) do
 		if v:IsA("Part") and v.Name:lower():find("coin") then
 			local d = (v.Position - hrp.Position).Magnitude
 			if d < dist then
 				dist = d
-				target = v
+				coin = v
 			end
 		end
 	end
-	return target
+	return coin
 end
 
 FarmTab:AddToggle({
-	Name = "Enable Smart AutoFarm",
+	Name = "Smart AutoFarm",
 	Default = false,
 	Callback = function(v)
 		AutoFarm = v
@@ -68,26 +70,26 @@ FarmTab:AddToggle({
 	end
 })
 
-------------------------------------------------
+--------------------------------------------------
 -- 👁 SCP ESP (MM2)
-------------------------------------------------
+--------------------------------------------------
 local ESPTab = Window:MakeTab({
 	Name = "👁 SCP ESP",
 	Icon = "rbxassetid://4483345998"
 })
 
-local function ApplyESP(plr,color)
+local function ApplyESP(plr, color)
 	if plr.Character and plr.Character:FindFirstChild("Head") then
 		if plr.Character.Head:FindFirstChild("SCP_ESP") then
 			plr.Character.Head.SCP_ESP:Destroy()
 		end
 
-		local gui = Instance.new("BillboardGui",plr.Character.Head)
+		local gui = Instance.new("BillboardGui", plr.Character.Head)
 		gui.Name = "SCP_ESP"
 		gui.Size = UDim2.new(0,120,0,40)
 		gui.AlwaysOnTop = true
 
-		local txt = Instance.new("TextLabel",gui)
+		local txt = Instance.new("TextLabel", gui)
 		txt.Size = UDim2.new(1,0,1,0)
 		txt.BackgroundTransparency = 1
 		txt.Text = plr.Name
@@ -102,20 +104,20 @@ ESPTab:AddButton({
 		for _,plr in pairs(Players:GetPlayers()) do
 			if plr ~= LocalPlayer then
 				if plr.Backpack:FindFirstChild("Knife") then
-					ApplyESP(plr,Color3.fromRGB(255,0,0)) -- Murderer
+					ApplyESP(plr, Color3.fromRGB(255,0,0)) -- Murder
 				elseif plr.Backpack:FindFirstChild("Gun") then
-					ApplyESP(plr,Color3.fromRGB(0,0,255)) -- Sheriff
+					ApplyESP(plr, Color3.fromRGB(0,0,255)) -- Sheriff
 				else
-					ApplyESP(plr,Color3.fromRGB(0,255,0)) -- Innocent
+					ApplyESP(plr, Color3.fromRGB(0,255,0)) -- Innocent
 				end
 			end
 		end
 	end
 })
 
-------------------------------------------------
+--------------------------------------------------
 -- 🧍 PLAYER
-------------------------------------------------
+--------------------------------------------------
 local PlayerTab = Window:MakeTab({
 	Name = "🧍 Player",
 	Icon = "rbxassetid://4483345998"
@@ -160,9 +162,9 @@ UIS.JumpRequest:Connect(function()
 	end
 end)
 
-------------------------------------------------
+--------------------------------------------------
 -- 🎯 TARGET / AIMLOCK
-------------------------------------------------
+--------------------------------------------------
 local TargetTab = Window:MakeTab({
 	Name = "🎯 Target",
 	Icon = "rbxassetid://4483345998"
@@ -196,5 +198,5 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
-------------------------------------------------
+--------------------------------------------------
 OrionLib:Init()
