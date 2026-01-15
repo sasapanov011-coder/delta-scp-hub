@@ -1,21 +1,9 @@
 --[[ 
-🔥 Sasha SCP Hub v2
+🔥 Sasha SCP Hub
 👑 Author: Sasha Panov
 ⚙ Executor: Delta
 🧠 MM2 / Universal
 ]]
-
----------------- KEY SYSTEM ----------------
-local VALID_KEY = "SASHA-2026"
-
-local function RequestKey()
-    return game:GetService("Players").LocalPlayer:Kick("❌ Invalid Key\nBuy key from Sasha")
-end
-
-if getgenv().KEY == nil or getgenv().KEY ~= VALID_KEY then
-    RequestKey()
-    return
-end
 
 ---------------- UI LOAD ----------------
 local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
@@ -31,9 +19,10 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+local UIS = game:GetService("UserInputService")
 
 ------------------------------------------------
--- AUTO FARM SMART
+-- 🧠 SMART AUTO FARM
 ------------------------------------------------
 local AutoFarm = false
 
@@ -43,7 +32,9 @@ local FarmTab = Window:MakeTab({
 })
 
 local function GetNearestCoin()
-	local hrp = LocalPlayer.Character.HumanoidRootPart
+	local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return nil end
+
 	local dist, target = math.huge, nil
 	for _,v in pairs(workspace:GetDescendants()) do
 		if v:IsA("Part") and v.Name:lower():find("coin") then
@@ -58,25 +49,27 @@ local function GetNearestCoin()
 end
 
 FarmTab:AddToggle({
-	Name = "Smart Auto Farm",
+	Name = "Enable Smart AutoFarm",
 	Default = false,
 	Callback = function(v)
 		AutoFarm = v
-		while AutoFarm do
-			task.wait(0.2)
-			pcall(function()
-				local coin = GetNearestCoin()
-				if coin then
-					LocalPlayer.Character.HumanoidRootPart.CFrame =
-						CFrame.new(coin.Position + Vector3.new(0,2,0))
-				end
-			end)
-		end
+		task.spawn(function()
+			while AutoFarm do
+				task.wait(0.25)
+				pcall(function()
+					local coin = GetNearestCoin()
+					if coin and LocalPlayer.Character then
+						LocalPlayer.Character.HumanoidRootPart.CFrame =
+							CFrame.new(coin.Position + Vector3.new(0,2,0))
+					end
+				end)
+			end
+		end)
 	end
 })
 
 ------------------------------------------------
--- SCP ESP
+-- 👁 SCP ESP (MM2)
 ------------------------------------------------
 local ESPTab = Window:MakeTab({
 	Name = "👁 SCP ESP",
@@ -85,15 +78,21 @@ local ESPTab = Window:MakeTab({
 
 local function ApplyESP(plr,color)
 	if plr.Character and plr.Character:FindFirstChild("Head") then
-		local b = Instance.new("BillboardGui",plr.Character.Head)
-		b.Size = UDim2.new(0,120,0,40)
-		b.AlwaysOnTop = true
-		local t = Instance.new("TextLabel",b)
-		t.Size = UDim2.new(1,0,1,0)
-		t.BackgroundTransparency = 1
-		t.Text = plr.Name
-		t.TextColor3 = color
-		t.TextScaled = true
+		if plr.Character.Head:FindFirstChild("SCP_ESP") then
+			plr.Character.Head.SCP_ESP:Destroy()
+		end
+
+		local gui = Instance.new("BillboardGui",plr.Character.Head)
+		gui.Name = "SCP_ESP"
+		gui.Size = UDim2.new(0,120,0,40)
+		gui.AlwaysOnTop = true
+
+		local txt = Instance.new("TextLabel",gui)
+		txt.Size = UDim2.new(1,0,1,0)
+		txt.BackgroundTransparency = 1
+		txt.Text = plr.Name
+		txt.TextColor3 = color
+		txt.TextScaled = true
 	end
 end
 
@@ -103,11 +102,11 @@ ESPTab:AddButton({
 		for _,plr in pairs(Players:GetPlayers()) do
 			if plr ~= LocalPlayer then
 				if plr.Backpack:FindFirstChild("Knife") then
-					ApplyESP(plr,Color3.fromRGB(255,0,0))
+					ApplyESP(plr,Color3.fromRGB(255,0,0)) -- Murderer
 				elseif plr.Backpack:FindFirstChild("Gun") then
-					ApplyESP(plr,Color3.fromRGB(0,0,255))
+					ApplyESP(plr,Color3.fromRGB(0,0,255)) -- Sheriff
 				else
-					ApplyESP(plr,Color3.fromRGB(0,255,0))
+					ApplyESP(plr,Color3.fromRGB(0,255,0)) -- Innocent
 				end
 			end
 		end
@@ -115,7 +114,7 @@ ESPTab:AddButton({
 })
 
 ------------------------------------------------
--- PLAYER (50+)
+-- 🧍 PLAYER
 ------------------------------------------------
 local PlayerTab = Window:MakeTab({
 	Name = "🧍 Player",
@@ -128,7 +127,9 @@ PlayerTab:AddSlider({
 	Max = 200,
 	Default = 16,
 	Callback = function(v)
-		LocalPlayer.Character.Humanoid.WalkSpeed = v
+		if LocalPlayer.Character then
+			LocalPlayer.Character.Humanoid.WalkSpeed = v
+		end
 	end
 })
 
@@ -138,37 +139,40 @@ PlayerTab:AddSlider({
 	Max = 300,
 	Default = 50,
 	Callback = function(v)
-		LocalPlayer.Character.Humanoid.JumpPower = v
+		if LocalPlayer.Character then
+			LocalPlayer.Character.Humanoid.JumpPower = v
+		end
 	end
 })
 
+local InfJump = false
 PlayerTab:AddToggle({
 	Name = "Infinite Jump",
 	Default = false,
 	Callback = function(v)
-		getgenv().InfJump = v
+		InfJump = v
 	end
 })
 
-game:GetService("UserInputService").JumpRequest:Connect(function()
-	if getgenv().InfJump then
-		LocalPlayer.Character.Humanoid:ChangeState("Jumping")
+UIS.JumpRequest:Connect(function()
+	if InfJump and LocalPlayer.Character then
+		LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 	end
 end)
 
 ------------------------------------------------
--- TARGET
+-- 🎯 TARGET / AIMLOCK
 ------------------------------------------------
 local TargetTab = Window:MakeTab({
 	Name = "🎯 Target",
 	Icon = "rbxassetid://4483345998"
 })
 
-local TargetName
+local TargetName = ""
 local AimLock = false
 
 TargetTab:AddTextbox({
-	Name = "Target Name",
+	Name = "Target Player",
 	Default = "",
 	Callback = function(v)
 		TargetName = v
@@ -184,7 +188,7 @@ TargetTab:AddToggle({
 })
 
 RunService.RenderStepped:Connect(function()
-	if AimLock and TargetName then
+	if AimLock and TargetName ~= "" then
 		local plr = Players:FindFirstChild(TargetName)
 		if plr and plr.Character and plr.Character:FindFirstChild("Head") then
 			Camera.CFrame = CFrame.new(Camera.CFrame.Position, plr.Character.Head.Position)
